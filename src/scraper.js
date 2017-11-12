@@ -1,12 +1,12 @@
-import cheerio from 'cheerio';
 import axios from 'axios';
+import cheerio from 'cheerio';
 
 import {
-  TABLE_SELECTOR,
+  BITCOIN_URL,
+  COIN_URL,
   CURRENCY_URL,
-  COIN_URL
+  ETHEREUM_URL
 } from './strings';
-
 
 const fetchPage = async (url) => {
   const response = await axios.get(url);
@@ -45,7 +45,7 @@ export const getCurrencyData = async () => {
   // Fetch page and load it
   const pageData = await fetchPage(CURRENCY_URL);
   const dom = getPageDOM(pageData);
-  const table = dom(TABLE_SELECTOR);
+  const table = dom('.data-table.market-table > tbody');
 
   // Iterate over price table rows and get needed data
   table.find('tr').each((index, row) => {
@@ -88,12 +88,12 @@ export const getCurrencyData = async () => {
 
 export const getCoinData = async () => {
   // Final coin data
-  let currencyData = [];
+  let coinData = [];
 
   // Fetch page and load it
   const pageData = await fetchPage(COIN_URL);
   const dom = getPageDOM(pageData);
-  const table = dom(TABLE_SELECTOR);
+  const table = dom('.data-table.market-table > tbody');
 
   // Iterate over price table rows and get needed data
   table.find('tr').each((index, row) => {
@@ -117,7 +117,7 @@ export const getCoinData = async () => {
     const maximum = normalize(dom(row).find('td').eq(3).text());
     const updatedAt = normalize(dom(row).find('td').eq(5).text() || dom(row).find('td').eq(4).text());
 
-    const currencyItemData = {
+    const coinItemData = {
       id,
       title,
       price,
@@ -128,8 +128,45 @@ export const getCoinData = async () => {
       updatedAt
     };
 
-    currencyData.push(currencyItemData);
+    coinData.push(coinItemData);
   });
 
-  return currencyData;
+  return coinData;
 };
+
+const getCryptoCurrencyData = async (url) => {
+  // Fetch page and load it
+  const pageData = await fetchPage(url);
+  const dom = getPageDOM(pageData);
+  const title = dom('.page-title').text();
+  const list = dom('.data-line');
+
+  const listItems = list.find('li');
+  const price = normalize(listItems.eq(0).find('span').text());
+  const maximum = normalize(listItems.eq(1).find('span').text());
+  const minimum = normalize(listItems.eq(2).find('span').text());
+  const updatedAt = normalize(listItems.eq(6).find('span').text());
+  const change = `${listItems.eq(9).find('span').text()} (${listItems.eq(8).find('span').text()})`;
+  const changeTypeElement = listItems.eq(8).find('span');
+  let changeType = '';
+  if (changeTypeElement.hasClass('high')) {
+    changeType = '+';
+  }
+  if (changeTypeElement.hasClass('low')) {
+    changeType = '-';
+  }
+
+  return {
+    title,
+    price,
+    change,
+    changeType,
+    minimum,
+    maximum,
+    updatedAt
+  };
+};
+
+export const getBitcoinData = async () => getCryptoCurrencyData(BITCOIN_URL);
+
+export const getEthereumData = async () => getCryptoCurrencyData(ETHEREUM_URL);

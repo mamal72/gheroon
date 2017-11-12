@@ -146,7 +146,7 @@ const getCryptoCurrencyData = async (url) => {
   const maximum = normalize(listItems.eq(1).find('span').text());
   const minimum = normalize(listItems.eq(2).find('span').text());
   const updatedAt = normalize(listItems.eq(6).find('span').text());
-  const change = `${listItems.eq(9).find('span').text()} (${listItems.eq(8).find('span').text()})`;
+  const change = `(${listItems.eq(8).find('span').text()}) ${listItems.eq(9).find('span').text()}`;
   const changeTypeElement = listItems.eq(8).find('span');
   let changeType = '';
   if (changeTypeElement.hasClass('high')) {
